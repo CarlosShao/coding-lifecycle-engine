@@ -1,0 +1,139 @@
+{
+  "_meta": {
+    "description": "Machine-consumable language→convention map, distilled from project-architecture.zh.md (L2/L3) + code-quality-rules.md (§9). Source of truth for get_conventions/set_convention seeding. is_default_heuristic=true everywhere: project may override via set_convention.",
+    "generated": "2026-07-15",
+    "enforcement_layers": ["inject_before_write", "lint_precommit", "ci_full", "verify_at_review"]
+  },
+  "rust": {
+    "formatter": "rustfmt",
+    "linter": "clippy",
+    "lint_rules": { "unwrap_used": "deny", "expect_used": "deny", "undocumented_unsafe_blocks": "deny", "cognitive_complexity": "warn" },
+    "test_framework": "cargo test",
+    "coverage_threshold": 80,
+    "naming": "snake_case",
+    "max_file_lines": 300,
+    "max_function_lines": 40,
+    "max_params": 4,
+    "max_nesting": 4,
+    "quality_rules": {
+      "R1": { "rule": "单文件 ≤ 300 行", "limit": 300, "enforce": "ci_max_lines" },
+      "R2": { "rule": "单函数 ≤ 40 行(soft)/60 硬", "limit": 40, "hard": 60, "enforce": "clippy_cognitive_complexity" },
+      "R3": { "rule": "禁裸 unwrap/expect(测试除外)", "enforce": "clippy::unwrap_used=deny" },
+      "R4": { "rule": "错误用 thiserror/anyhow 定义类型", "enforce": "review+clippy" },
+      "R5": { "rule": "pub 项必须 doc comment", "enforce": "missing_docs=warn" },
+      "R6": { "rule": "模块清晰分层 src/auth/ src/db/", "enforce": "structure_check" },
+      "R7": { "rule": "禁 unsafe(除非注释论证)", "enforce": "clippy::undocumented_unsafe_blocks=deny" },
+      "R8": { "rule": "优先借用而非 clone", "enforce": "review" }
+    }
+  },
+  "typescript": {
+    "formatter": "prettier",
+    "linter": "eslint (@typescript-eslint)",
+    "lint_rules": {
+      "max-lines-per-file": 250,
+      "max-params": 4,
+      "max-depth": 4,
+      "complexity": 10,
+      "no-explicit-any": "error",
+      "no-floating-promises": "error",
+      "no-console": { "prod": "error" }
+    },
+    "test_framework": "vitest/jest",
+    "coverage_threshold": 80,
+    "naming": "camelCase",
+    "max_file_lines": 250,
+    "max_function_lines": 40,
+    "max_params": 4,
+    "max_nesting": 4,
+    "quality_rules": {
+      "T1": { "rule": "单文件 ≤ 250 行", "limit": 250, "enforce": "eslint_max-lines-per-file" },
+      "T2": { "rule": "禁 any", "enforce": "@typescript-eslint/no-explicit-any=error" },
+      "T3": { "rule": "函数参数 ≤ 4", "limit": 4, "enforce": "eslint_max-params" },
+      "T4": { "rule": "嵌套 ≤ 4 层", "limit": 4, "enforce": "eslint_max-depth/complexity" },
+      "T5": { "rule": "async 必须 try-catch 或 .catch", "enforce": "no-floating-promises" },
+      "T6": { "rule": "组件单一职责", "enforce": "review" },
+      "T7": { "rule": "禁 as 强转(除非 unknown 收窄)", "enforce": "review" },
+      "T8": { "rule": "strict 模式全开", "enforce": "tsconfig_strict" },
+      "T9": { "rule": "禁 console.log 进生产", "enforce": "no-console(prod)" }
+    }
+  },
+  "python": {
+    "formatter": "black",
+    "linter": "ruff",
+    "lint_rules": { "E722": "error", "B006": "error", "C901": "warn", "D": "warn" },
+    "test_framework": "pytest",
+    "coverage_threshold": 80,
+    "naming": "snake_case",
+    "max_file_lines": 400,
+    "max_function_lines": 50,
+    "max_params": 4,
+    "max_nesting": 4,
+    "quality_rules": {
+      "P1": { "rule": "单文件 ≤ 400 行", "limit": 400, "enforce": "ruff/ci" },
+      "P2": { "rule": "全量 type hints", "enforce": "mypy_strict" },
+      "P3": { "rule": "禁裸 except:", "enforce": "ruff_E722" },
+      "P4": { "rule": "函数 ≤ 50 行", "limit": 50, "enforce": "ruff_C901" },
+      "P5": { "rule": "用 dataclass/pydantic 而非裸 dict", "enforce": "review" },
+      "P6": { "rule": "禁可变默认参数", "enforce": "ruff_B006" },
+      "P7": { "rule": "docstring 公共函数/类", "enforce": "ruff_D" }
+    }
+  },
+  "go": {
+    "formatter": "gofmt",
+    "linter": "golangci-lint",
+    "lint_rules": { "errcheck": "error", "revive": "warn", "govet": "error" },
+    "test_framework": "go test",
+    "coverage_threshold": 80,
+    "naming": "CamelCase(exported)/camelCase(local)",
+    "max_file_lines": 500,
+    "max_function_lines": 60,
+    "max_params": 4,
+    "max_nesting": 4,
+    "quality_rules": {
+      "Go1": { "rule": "单文件 ≤ 500 行", "limit": 500, "enforce": "golangci-lint" },
+      "Go2": { "rule": "错误必须处理, 禁 _ = 吞错", "enforce": "errcheck" },
+      "Go3": { "rule": "错误包装用 %w", "enforce": "review" },
+      "Go4": { "rule": "禁 panic 于库代码", "enforce": "review" },
+      "Go5": { "rule": "导出标识符必须注释", "enforce": "revive" },
+      "Go6": { "rule": "context 作首参传递", "enforce": "review" }
+    }
+  },
+  "vue": {
+    "framework": "vue3",
+    "formatter": "prettier",
+    "linter": "eslint + @vue/eslint-config",
+    "test_framework": "vitest",
+    "coverage_threshold": 80,
+    "naming": "PascalCase(component)/camelCase",
+    "max_file_lines": 200,
+    "max_function_lines": 40,
+    "max_params": 4,
+    "max_nesting": 4,
+    "quality_rules": {
+      "F1": { "rule": "组件 ≤ 200 行, 超了拆子组件", "limit": 200, "enforce": "eslint_max-lines" },
+      "F2": { "rule": "逻辑抽 composable, 不堆组件里", "enforce": "review" },
+      "F3": { "rule": "props 必须类型定义+校验", "enforce": "lint" },
+      "F4": { "rule": "禁在模板里写复杂逻辑", "enforce": "review" },
+      "F5": { "rule": "副作用集中管理(onMounted/watch)", "enforce": "review" }
+    }
+  },
+  "react": {
+    "framework": "react",
+    "formatter": "prettier",
+    "linter": "eslint + react-hooks",
+    "test_framework": "vitest/react-testing-library",
+    "coverage_threshold": 80,
+    "naming": "PascalCase(component)/camelCase",
+    "max_file_lines": 200,
+    "max_function_lines": 40,
+    "max_params": 4,
+    "max_nesting": 4,
+    "quality_rules": {
+      "F1": { "rule": "组件 ≤ 200 行, 超了拆子组件", "limit": 200, "enforce": "eslint_max-lines" },
+      "F2": { "rule": "逻辑抽 hook/custom, 不堆组件里", "enforce": "review" },
+      "F3": { "rule": "props 必须类型定义(TS/PropTypes)+校验", "enforce": "lint" },
+      "F4": { "rule": "禁在 JSX 里写复杂逻辑", "enforce": "review" },
+      "F5": { "rule": "副作用集中管理(useEffect)", "enforce": "review" }
+    }
+  }
+}

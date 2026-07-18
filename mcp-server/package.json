@@ -1,0 +1,21 @@
+{
+  "name": "ai-coding-lifecycle-mcp",
+  "version": "1.0.0",
+  "description": "MCP server: 有状态的 AI Coding 生命周期真相源 + 约束执行引擎 (SQLite)",
+  "type": "module",
+  "bin": {
+    "ai-coding-lifecycle": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test test/"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "better-sqlite3": "^11.3.0"
+  },
+  "license": "MIT"
+}

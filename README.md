@@ -20,6 +20,25 @@ The core insight: **state must live in a database, not in the conversation.** Co
 
 ---
 
+## Built on the work of others (important)
+
+**This project is not an invention of the AI's own "method". It is a workflow-orchestration layer built on top of open-source AI coding *skills* created by other people — primarily [Matt Pocock's `skills` collection](https://github.com/mattpocock/skills).**
+
+Those upstream skills are excellent at *what to do in a single conversation* (how to grill a plan, how to write tests first, how to review a diff), but they are **stateless**: every time you open a new window, the agent has no memory of what it did before, and nothing enforces that you actually finished one step before moving to the next.
+
+What this project adds is the **stateful engine around those skills**:
+
+- It wraps the upstream skills (grilling, TDD, code-review, research, handoff, …) into a **6-phase pipeline** driven by an MCP server.
+- It persists **every phase, decision, contract, and gate** to a SQLite database so the process survives across sessions.
+- It enforces **hard gates** (stop-after-each-phase, identity lock, NFR completeness) that the raw skills never had.
+- It makes the whole flow **resumable, auditable, and parallel-safe**.
+
+In short: **the upstream skills are the engine; this repo is the chassis, the fuel gauge, and the traffic lights.** Full credit for the underlying techniques belongs to their original authors — see [Acknowledgements](#acknowledgements).
+
+> If you see a phase named **"Grilling"** below: that is Matt Pocock's `grilling` skill (an adversarial plan-review technique) being invoked as Phase 0.5. It is *not* something home-grown here — we are standing on his shoulders.
+
+---
+
 ## Why does it exist? (The problems it solves)
 
 | Problem with vanilla AI coding | How the lifecycle solves it |
@@ -50,12 +69,12 @@ Phase 3    ★ 对抗验收     Adversarial acceptance (HARD GATE)
 Phase 4    失败预演 + 交付  Failure rehearsal + Delivery
 ```
 
-- **Phase 0 — Requirements & Solution.** Capture what is being built and the proposed approach. Maturity is scoped here (MVP / commercial / enterprise), which controls how strict later gates are.
-- **Phase 0.5 — Grilling (★ hard gate).** The plan is stress-tested against exhaustive dimensions before a single line of production code is written. Weak plans are sent back.
-- **Phase 1 — Decomposition & Contract freeze.** Work is split into tasks; interface contracts between tasks are **frozen**. Changing a frozen contract bumps its version and automatically blocks dependents until they re-align.
-- **Phase 2 — Parallel development.** Tasks execute (potentially in parallel), respecting the DAG and frozen contracts. File locks prevent collisions.
-- **Phase 3 — Adversarial acceptance (★ hard gate).** Deliverables are attacked, not congratulated. Real tests, real edge cases.
-- **Phase 4 — Failure rehearsal & delivery.** Rehearse how it breaks, then hand off.
+- **Phase 0 — Requirements & Solution.** Capture what is being built and the proposed approach. Maturity is scoped here (MVP / commercial / enterprise), which controls how strict later gates are. (Technique credit: `mattpocock/skills` `to-spec` / `research`.)
+- **Phase 0.5 — Grilling (★ hard gate).** The plan is stress-tested against exhaustive dimensions before a single line of production code is written. Weak plans are sent back. **This is Matt Pocock's `grilling` skill** — an adversarial, one-question-at-a-time plan review — wired in as a hard gate.
+- **Phase 1 — Decomposition & Contract freeze.** Work is split into tasks; interface contracts between tasks are **frozen**. Changing a frozen contract bumps its version and automatically blocks dependents until they re-align. (Technique credit: `implement` / `to-tickets` from `mattpocock/skills`.)
+- **Phase 2 — Parallel development.** Tasks execute (potentially in parallel), respecting the DAG and frozen contracts. File locks prevent collisions. (Technique credit: `tdd` drives per-task implementation + tests.)
+- **Phase 3 — Adversarial acceptance (★ hard gate).** Deliverables are attacked, not congratulated. Real tests, real edge cases. (Technique credit: `code-review` / `tdd` from `mattpocock/skills`.)
+- **Phase 4 — Failure rehearsal & delivery.** Rehearse how it breaks, then hand off. (Technique credit: `handoff` from `mattpocock/skills`.)
 
 ---
 
@@ -190,6 +209,24 @@ ai-coding-lifecycle/
 MIT
 
 ---
+
+## Acknowledgements
+
+This project is a **derivative workflow built on top of open-source skills authored by others.** The underlying techniques belong to their original authors; this repo's contribution is the stateful orchestration, persistence, and gating around them.
+
+- **[Matt Pocock — `skills`](https://github.com/mattpocock/skills)** — the primary engine. The following skills from this collection are invoked directly by the lifecycle:
+  - `grilling` — adversarial plan review → **Phase 0.5** (the "Grilling" hard gate)
+  - `tdd` — test-driven development → **Phase 2 / 3**
+  - `code-review` — adversarial diff review → **Phase 3**
+  - `research` / `to-spec` — requirements & spec capture → **Phase 0**
+  - `implement` / `to-tickets` — decomposition & ticketing → **Phase 1**
+  - `handoff` — delivery & documentation → **Phase 4**
+  - `diagnosing-bugs` — bug triage (sibling track)
+- **The MCP / SQLite state layer** is original to this project (the `mcp-server/` directory and the `references/` guides).
+
+If you like the *techniques*, go star and credit the upstream skills. If you like the *stateful pipeline that makes them survivable across sessions*, that is what this repo adds.
+
+---
 ---
 
 <a name="中文文档"></a>
@@ -213,6 +250,25 @@ MIT
 3. **42 个 reference 文件**（`references/`）——按需拉取的深度指南（契约设计、成熟度定级、NFR 维度、并行执行、对抗验收等）。
 
 核心洞见：**状态必须活在数据库里，而不是对话里。** 对话会被截断、被摘要、被遗忘；数据库不会。当你切换任务、关闭窗口，或者一周后回来，生命周期会精确地从上次停下的地方续跑。
+
+---
+
+## 站在别人的肩膀上（重要说明）
+
+**本项目不是 AI 自己"发明"的一套方法，而是一套搭在别人开源的 AI 编码*技能（skill）*之上的流程编排层——主要来自 [Matt Pocock 的 `skills` 合集](https://github.com/mattpocock/skills)。**
+
+那些上游技能在"单次对话里该怎么做"上非常出色（怎么拷问方案、怎么测试先行、怎么审 diff），但它们是**无状态的**：每次新开窗口，智能体都不记得之前做了什么，也没人强制你必须做完一步才能进下一步。
+
+本项目的价值，是给这些技能套上了一个**有状态的引擎**：
+
+- 把上游技能（grilling、TDD、code-review、research、handoff……）编排成由 MCP 服务器驱动的**六阶段流水线**；
+- 把**每个阶段、决策、契约、门控**都落库到 SQLite，让流程能跨会话存活；
+- 加上上游技能本身没有的**硬门控**（每阶段停车、身份硬卡、NFR 完整度）；
+- 让整套流程**可续跑、可审计、并行安全**。
+
+一句话：**上游技能是发动机，本仓库是底盘、油表和红绿灯。** 底层技术的全部功劳属于原作者——见[致谢](#致谢)。
+
+> 如果你在下面看到名为 **"Grilling（拷问）"** 的阶段：那是 Matt Pocock 的 `grilling` 技能（一种对抗式方案评审手法），被我们接成了 Phase 0.5。**这不是本仓库自创的**，我们是在借他的肩膀。
 
 ---
 
@@ -246,12 +302,12 @@ Phase 3    ★ 对抗验收        （硬门控）
 Phase 4    失败预演 + 交付
 ```
 
-- **Phase 0 — 需求与方案。** 明确要建什么、拟采用的方案。成熟度在此定级（MVP / 商用 / 企业级），它决定后续门控有多严格。
-- **Phase 0.5 — Grilling 拷问（★ 硬门控）。** 在写下第一行生产代码之前，方案要在穷尽式维度上被压力测试。弱方案会被打回。
-- **Phase 1 — 拆分与契约冻结。** 工作被拆成任务；任务之间的接口契约被**冻结**。改动已冻结契约会升版，并自动 block 依赖方直到它们重新对齐。
-- **Phase 2 — 并行开发。** 任务执行（可并行），遵守 DAG 与冻结契约。文件锁防止冲突。
-- **Phase 3 — 对抗验收（★ 硬门控）。** 交付物是被"攻击"而不是被"表扬"。真测试、真边界情况。
-- **Phase 4 — 失败预演与交付。** 先预演它怎么坏，再交接。
+- **Phase 0 — 需求与方案。** 明确要建什么、拟采用的方案。成熟度在此定级（MVP / 商用 / 企业级），它决定后续门控有多严格。（技术出处：`mattpocock/skills` 的 `to-spec` / `research`。）
+- **Phase 0.5 — Grilling 拷问（★ 硬门控）。** 在写下第一行生产代码之前，方案要在穷尽式维度上被压力测试。弱方案会被打回。**这就是 Matt Pocock 的 `grilling` 技能**——一种对抗式、一次只问一个问题的方案评审——被接成了硬门控。
+- **Phase 1 — 拆分与契约冻结。** 工作被拆成任务；任务之间的接口契约被**冻结**。改动已冻结契约会升版，并自动 block 依赖方直到它们重新对齐。（技术出处：`mattpocock/skills` 的 `implement` / `to-tickets`。）
+- **Phase 2 — 并行开发。** 任务执行（可并行），遵守 DAG 与冻结契约。文件锁防止冲突。（技术出处：`tdd` 驱动单任务实现 + 测试。）
+- **Phase 3 — 对抗验收（★ 硬门控）。** 交付物是被"攻击"而不是被"表扬"。真测试、真边界情况。（技术出处：`mattpocock/skills` 的 `code-review` / `tdd`。）
+- **Phase 4 — 失败预演与交付。** 先预演它怎么坏，再交接。（技术出处：`mattpocock/skills` 的 `handoff`。）
 
 ---
 
@@ -384,3 +440,21 @@ ai-coding-lifecycle/
 ## 许可证
 
 MIT
+
+---
+
+## 致谢
+
+本项目是一套**派生流程，搭建在他人开源技能之上**。底层技术功劳归原作者；本仓库的贡献，是围绕这些技能做出的有状态编排、持久化与门控。
+
+- **[Matt Pocock — `skills`](https://github.com/mattpocock/skills)** —— 主要发动机。生命周期直接调用了其中的这些技能：
+  - `grilling` —— 对抗式方案评审 → **Phase 0.5**（"Grilling" 硬门控）
+  - `tdd` —— 测试驱动开发 → **Phase 2 / 3**
+  - `code-review` —— 对抗式 diff 评审 → **Phase 3**
+  - `research` / `to-spec` —— 需求与规格捕获 → **Phase 0**
+  - `implement` / `to-tickets` —— 拆分与工单 → **Phase 1**
+  - `handoff` —— 交付与文档 → **Phase 4**
+  - `diagnosing-bugs` —— Bug 分诊（兄弟轨道）
+- **MCP / SQLite 状态层**（`mcp-server/` 目录与 `references/` 指南）为本项目原创。
+
+如果你喜欢那些*技术手法*，去给上游技能点 star、署名；如果你喜欢*让它们能跨会话活下来的有状态流水线*，那正是本仓库补上的部分。
